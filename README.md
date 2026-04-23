@@ -1,3 +1,4 @@
+[README_projet2 (1).md](https://github.com/user-attachments/files/27030060/README_projet2.1.md)
 # Impact des Dépenses Publiques de Santé sur la Mortalité et l'Espérance de Vie en Afrique
 ### Une Analyse Économétrique sur Données de Panel (2000-2022)
 
@@ -195,6 +196,101 @@ projet-sante-afrique/
 - Absence de variables de contrôle comme le revenu par habitant ou la gouvernance
 - La mortalité maternelle est mesurée en données quinquennales interpolées
 - Les dépenses de santé incluent dépenses publiques et privées selon la définition OMS
+
+---
+
+---
+
+## 📝 Nota Bene — Tests de Stationnarité et Stratégie Économétrique
+
+### NB.1 — Tests de Racine Unitaire (Fisher-ADF)
+
+Des tests de stationnarité ont été réalisés sur toutes les variables via le test de Fisher basé sur le test de Dickey-Fuller Augmenté (ADF), adapté aux données de panel (54 pays, 23 périodes).
+
+| Variable | p-value (Pm) niveau | p-value (Pm) différence | Ordre |
+|---|---|---|---|
+| `mort_inf` | **0.0000** | — | **I(0)** ✅ |
+| `dep_sante` | **0.1017** | **0.0000** | **I(1)** ⚠️ |
+| `esp_vie` | **0.0000** ambigu | **0.0000** | **I(1)** ⚠️ |
+| `mort_mat` | **0.0000** ambigu | **0.0000** | **I(1)** ⚠️ |
+
+> Note : `esp_vie` et `mort_mat` présentent des résultats ambigus au niveau (2 statistiques significatives sur 4). Par précaution, elles sont traitées comme I(1).
+
+### NB.2 — Tests de Cointégration (Test de Kao)
+
+`esp_vie`, `mort_mat` et `dep_sante` étant toutes I(1), des tests de cointégration de Kao ont été réalisés pour détecter une relation de long terme.
+
+**Test Kao : `esp_vie` et `dep_sante`**
+
+| Statistique | p-value | Conclusion |
+|---|---|---|
+| Modified Dickey-Fuller t | **0.0000** | ✅ |
+| Dickey-Fuller t | **0.0000** | ✅ |
+| Augmented Dickey-Fuller t | **0.0000** | ✅ |
+| Unadjusted Modified DF t | 0.0686 | ⚠️ |
+| Unadjusted Dickey-Fuller t | 0.1731 | ❌ |
+
+**Conclusion : `esp_vie` et `dep_sante` sont COINTÉGRÉES** ✅
+
+**Test Kao : `mort_mat` et `dep_sante`**
+
+| Statistique | p-value | Conclusion |
+|---|---|---|
+| Modified Dickey-Fuller t | **0.0114** | ✅ |
+| Dickey-Fuller t | 0.0976 | ⚠️ |
+| Augmented Dickey-Fuller t | **0.0417** | ✅ |
+| Unadjusted Modified DF t | **0.0018** | ✅ |
+| Unadjusted Dickey-Fuller t | **0.0266** | ✅ |
+
+**Conclusion : `mort_mat` et `dep_sante` sont COINTÉGRÉES** ✅
+
+### NB.3 — Stratégie Économétrique Retenue
+
+| Variable | Ordre | Cointégration | Stratégie |
+|---|---|---|---|
+| `mort_inf` | I(0) | — | Effets fixes en **niveaux** |
+| `esp_vie` | I(1) | ✅ Oui | Effets fixes en **différences premières** |
+| `mort_mat` | I(1) | ✅ Oui | Effets fixes en **différences premières** |
+
+> Note : Les estimateurs DOLS et FMOLS (idéaux pour variables cointégrées) ne sont pas disponibles dans Stata 15 IC. Les régressions en différences premières constituent une alternative valide.
+
+### NB.4 — Résultats après Correction pour la Stationnarité
+
+**Modèle 1 — Effets fixes en niveaux (variable : mort_inf)**
+
+| Variable | Coefficient | Écart-type | t | p-value |
+|---|---|---|---|---|
+| dep_sante | **-2.704** | 0.599 | -4.52 | **0.000** |
+| Constante | 94.666 | 3.108 | 30.46 | 0.000 |
+
+- R² within = 0.0158 | N = 1,201 | Groupes = 54
+- **Conclusion :** Effet négatif et significatif — une hausse de 1% des dépenses santé réduit la mortalité infantile de **2.7 pour 1000 naissances**
+
+**Modèle 2 — Effets fixes en différences (variable : d_esp_vie)**
+
+| Variable | Coefficient | Écart-type | t | p-value |
+|---|---|---|---|---|
+| d_dep_sante | **-0.089** | 0.068 | -1.31 | **0.191** |
+
+- R² within = 0.0016 | Prob > F = 0.1915
+- **Conclusion :** Effet **non significatif** à court terme — les variations des dépenses santé n'affectent pas immédiatement l'espérance de vie
+
+**Modèle 3 — Effets fixes en différences (variable : d_mort_mat)**
+
+| Variable | Coefficient | Écart-type | t | p-value |
+|---|---|---|---|---|
+| d_dep_sante | **1.160** | 1.559 | 0.74 | **0.457** |
+
+- R² within = 0.0005 | Prob > F = 0.4570
+- **Conclusion :** Effet **non significatif** à court terme
+
+### NB.5 — Interprétation Économique
+
+Ces résultats révèlent une distinction importante entre effets de court et de long terme :
+
+- Les dépenses de santé ont un effet **immédiat et significatif** sur la mortalité infantile (I(0)) — ce qui suggère que les investissements en santé primaire (vaccinations, soins néonataux) produisent des résultats rapides
+- En revanche, leur effet sur l'espérance de vie et la mortalité maternelle n'est **pas significatif à court terme** — ces indicateurs répondent aux politiques de santé sur le **long terme**, ce qui est cohérent avec la relation de cointégration détectée par le test de Kao
+- La non-significativité en différences premières pour `esp_vie` et `mort_mat` ne contredit pas la relation de long terme confirmée par le test de cointégration
 
 ---
 
